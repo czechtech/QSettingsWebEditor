@@ -3,22 +3,18 @@ QSettingsWebEditor
 
 Web Application for Editing QSettings
 
-Projects that use an Arduino, Raspberry Pi, Beagle Board, etc. often have a couple settings that might need to be configured once or twice in the devices lifetime. Adding extra hardware (LCD, buttons, keypad) and code for rare adjustments is expensive in time and money. Most of these embed-able computers have an ethernet port and the device is already on the network.
+Projects that use an Arduino, Raspberry Pi, Beagle Board, etc. often have a couple settings that might need to be configured once or twice in the device's lifetime. Adding extra hardware (LCD, buttons, keypad, etc.) and code for rare adjustments is expensive in time and money. Most of these embed-able computers have an ethernet port and the device is already on the network.
 
 This is a test project to explore creating a web application for adjusting a device's settings.
 
-In a way, this is a web version of the [SettingsEditor](http://qt-project.org/doc/qt-4.8/tools-settingseditor.html).  It uses the [QHttpServer by Nikhil Marathe](https://github.com/nikhilm/qhttpserver/).
+In a way, this is a web version of the [SettingsEditor](http://qt-project.org/doc/qt-4.8/tools-settingseditor.html).
 
 **NOTE: QSettingsWebEditor is NOT secure! DO NOT use it on any production machine**
-
-Purpose
--------
-
 
 Installation
 ------------
 
-Requires QHttpServer library.
+QSettingsWebEditor relies heavily on [QHttpServer by Nikhil Marathe](https://github.com/nikhilm/qhttpserver/).
 
     wget https://github.com/nikhilm/qhttpserver/archive/master.zip
     gunzip master.zip
@@ -28,7 +24,7 @@ Requires QHttpServer library.
     cd ..
     rm master.zip
 
-Requires QSharedSettings library.
+Requires the QSharedSettings library.
 
     wget https://github.com/czechtech/qsharedsettings/archive/master.zip
     gunzip master.zip
@@ -57,11 +53,9 @@ Now, on another screen or window or computer or etc, direct a web browser to the
 
     http://localhost:8080
 
-You should see "URL Path must be of the form organization/application/"
+You should see the message "URL Path must be of the form organization/application/"
 
-[pic]
-
-Now, add the Qt organization and application name of any Qt program that uses QSettings. Example:
+Now, add to the URL the organization and application name of any Qt program that uses QSettings. Example:
 
     http://localhost:8080/czechtech/qsettingswebeditor/
 
@@ -69,7 +63,7 @@ You will see the settings associated with the QSettingsWebEditor (the port it li
 
 To quit QSettingsWebEditor, use CTRL-C to interrupt it.  If there's a "Segmentation Fault" upon exiting, this is a [known issue](https://github.com/nikhilm/qhttpserver/issues) with the QHttpServer library.
 
-Because QSettingsWebEditor utilizes the QSharedSettings library (instead of just QSettings), the changes can occur immediately.  Any other application settings you change will likely need to be closed and restarted for the settings to take effect.
+Because QSettingsWebEditor utilizes the QSharedSettings library (instead of just QSettings), the changes can occur immediately.  Any other application's settings you change will likely need to be closed and restarted for the settings to take effect.  See [QSharedSettings](https://github.com/czechtech/qsharedsettings/) for more information about this.
 
 Notes
 -----
@@ -78,7 +72,7 @@ The URL path must be of the form organization/application/  Without the last /, 
 
 Usually only an admin account can open port 80 on a computer.  So, don't set QSettingsWebEditor's port number to the standard web server port number 80 unless it is running as root.  If a bad port number is chosen, edit or delete the file ~/.config/CzechTech/QSettingsWebEditor.conf
 
-Often times, the web page renders quicker than the settings can be updated. You may find you have to refresh the page to see an update take affect.
+Often times the web page renders quicker than the settings can be updated. You may find you have to refresh the page to see an update shown in the table.
 
 The user account that launches QSettingsWebEditor determines what application settings are accessible.
 
@@ -86,7 +80,7 @@ To Do
 -----
 
 - Better utilize and display [QSettings Fallback](http://qt-project.org/doc/qt-4.8/qsettings.html#fallback-mechanism),
-- Not utilizing the asynchronicity of QHttpServer,
+- Better utilize the a-synchronicity of QHttpServer,
 - Add security mechanisms,
 - Method for launching this as a background service,
 - Allow code to compile and function without qsharedsettings library, and
