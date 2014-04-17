@@ -2,3 +2,101 @@ QSettingsWebEditor
 ==================
 
 Web Application for Editing QSettings
+
+Projects that use an Arduino, Raspberry Pi, Beagle Board, etc. often have a couple settings that might need to be configured once or twice in the devices lifetime. Adding extra hardware (LCD, buttons, keypad) and code for rare adjustments is expensive in time and money. Most of these embed-able computers have an ethernet port and the device is already on the network.
+
+This is a test project to explore creating a web application for adjusting a device's settings.
+
+In a way, this is a web version of the [SettingsEditor](http://qt-project.org/doc/qt-4.8/tools-settingseditor.html).  It uses the [QHttpServer by Nikhil Marathe](https://github.com/nikhilm/qhttpserver/).
+
+**NOTE: QSettingsWebEditor is NOT secure! DO NOT use it on any production machine**
+
+Purpose
+-------
+
+
+Installation
+------------
+
+Requires QHttpServer library.
+
+    wget https://github.com/nikhilm/qhttpserver/archive/master.zip
+    gunzip master.zip
+    cd qhttpserver-master
+    qmake -r PREFIX=/usr
+    make && su -c 'make install'
+    cd ..
+    rm master.zip
+
+Requires QSharedSettings library.
+
+    wget https://github.com/czechtech/qsharedsettings/archive/master.zip
+    gunzip master.zip
+    cd qsharedsettings-master
+    qmake && make && su -c 'make install'
+    cd ..
+    rm master.zip
+
+Download the source and compile it.
+
+    wget https://github.com/czechtech/qsettingswebeditor/archive/master.zip
+    gunzip master.zip
+    cd qsettingswebeditor-master
+    qmake && make && su -c 'make install'
+
+Usage
+-----
+
+Launch the QSettingsWebEditor program:
+
+    ./qsettingswebeditor
+
+This needs to be continually running.
+
+Now, on another screen or window or computer or etc, direct a web browser to the ip of the computer running QSettingsWebEditor
+
+    http://localhost:8080
+
+You should see "URL Path must be of the form organization/application/"
+
+[pic]
+
+Now, add the Qt organization and application name of any Qt program that uses QSettings. Example:
+
+    http://localhost:8080/czechtech/qsettingswebeditor/
+
+You will see the settings associated with the QSettingsWebEditor (the port it listens on).  You can now make any changes.
+
+To quit QSettingsWebEditor, use CTRL-C to interrupt it.  If there's a "Segmentation Fault" upon exiting, this is a [known issue](https://github.com/nikhilm/qhttpserver/issues) with the QHttpServer library.
+
+Because QSettingsWebEditor utilizes the QSharedSettings library (instead of just QSettings), the changes can occur immediately.  Any other application settings you change will likely need to be closed and restarted for the settings to take effect.
+
+Notes
+-----
+
+The URL path must be of the form organization/application/  Without the last /, many web browsers will assume "application" is the web page, and when the form is submitted, it will take you to organization/index.html
+
+Usually only an admin account can open port 80 on a computer.  So, don't set QSettingsWebEditor's port number to the standard web server port number 80 unless it is running as root.  If a bad port number is chosen, edit or delete the file ~/.config/CzechTech/QSettingsWebEditor.conf
+
+Often times, the web page renders quicker than the settings can be updated. You may find you have to refresh the page to see an update take affect.
+
+The user account that launches QSettingsWebEditor determines what application settings are accessible.
+
+To Do
+-----
+
+- Better utilize and display [QSettings Fallback](http://qt-project.org/doc/qt-4.8/qsettings.html#fallback-mechanism),
+- Not utilizing the asynchronicity of QHttpServer,
+- Add security mechanisms,
+- Method for launching this as a background service,
+- Allow code to compile and function without qsharedsettings library, and
+- Many many many "TODO" notes within the code.
+
+The code functions well, but it could use some enhancements and bullet-proofing.
+
+Uses
+----
+
+- ProPresentText
+
+If you use this in a project drop, a line to have your project linked here.
