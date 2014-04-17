@@ -26,9 +26,9 @@ QSettingsWebEditor relies heavily on [QHttpServer by Nikhil Marathe](https://git
 
 Requires the QSharedSettings library.
 
-    wget https://github.com/czechtech/qsharedsettings/archive/master.zip
+    wget https://github.com/czechtech/libqsharedsettings/archive/master.zip
     gunzip master.zip
-    cd qsharedsettings-master
+    cd libqsharedsettings-master
     qmake && make && su -c 'make install'
     cd ..
     rm master.zip
