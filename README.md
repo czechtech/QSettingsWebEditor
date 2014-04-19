@@ -79,9 +79,12 @@ The user account that launches QSettingsWebEditor determines what application se
 To Do
 -----
 
+- Restructure code to be usable as a library with a test app,
+- Add a constructor which accepts an "organization" and "application" to limit access (ignores path),
 - Better utilize and display [QSettings Fallback](http://qt-project.org/doc/qt-4.8/qsettings.html#fallback-mechanism),
 - Better utilize the a-synchronicity of QHttpServer,
 - Add security mechanisms,
+- Maintain an open connection with the webbrowser so Settings can be updated when QSharedSettings signals,
 - Method for launching this as a background service,
 - Allow code to compile and function without qsharedsettings library, and
 - Many many many "TODO" notes within the code.
