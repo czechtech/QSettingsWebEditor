@@ -11,8 +11,8 @@ QSettingsWebEditor::QSettingsWebEditor(QObject* parent)
 	portNumber = settings.value("Port", 8080).toInt();
 	
 	// Signal/Slot Connections:
-	connect(&settings, SIGNAL(settingChanged(QString)),
-	             this, SLOT(onSettingChanged(QString)));
+	connect(&settings, SIGNAL(settingsChanged(QStringList)),
+	             this, SLOT(onSettingsChanged(QStringList)));
 	connect(&server, SIGNAL(newRequest(QHttpRequest*, QHttpResponse*)),
 	           this, SLOT(onHttpRequest(QHttpRequest*, QHttpResponse*)));
 	
@@ -29,9 +29,9 @@ QSettingsWebEditor::~QSettingsWebEditor()
 
 
 // Public Slot:
-void QSettingsWebEditor::onSettingChanged(QString key)
+void QSettingsWebEditor::onSettingsChanged(QStringList keys)
 {
-	if(key != "Port") return;
+	if(!keys.join(" ").contains("Port")) return;
 
 	int p = settings.value("Port", 8080).toInt();
 	if(portNumber != p) {

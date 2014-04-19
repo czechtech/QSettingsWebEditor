@@ -39,7 +39,7 @@ public:
 	//
 
 public slots:
-	void onSettingChanged(QString key);
+	void onSettingsChanged(QStringList keys);
 	void onHttpRequest(QHttpRequest *req, QHttpResponse *resp);
 	void onHttpRequestEnd();
 	void onHttpRequestData(const QByteArray &data);
