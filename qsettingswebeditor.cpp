@@ -271,6 +271,19 @@ QString QSettingsWebEditor::generateSettingsPage(QString organization, QString a
 			i.setAttribute("type","text");
 			i.setAttribute("name", k);
 			i.setAttribute("value", v.toString() );
+		} else if(t == QVariant::Bool) {
+			QDomElement iFalse = doc.createElement("input");
+			QDomElement iTrue  = doc.createElement("input");
+			val.appendChild(iTrue);
+			val.appendChild(iFalse);
+			iTrue.setAttribute("type","radio");
+			iTrue.setAttribute("name", k);
+			iTrue.setAttribute("value", "true");
+			if(v.toBool()) { iTrue.setAttribute("checked", "checked"); }
+			iFalse.setAttribute("type","radio");
+			iFalse.setAttribute("name", k);
+			iFalse.setAttribute("value", "false");
+			if(!v.toBool()) { iTrue.setAttribute("checked", "checked"); }
 		} else {
 			// TODO: Handle Other QVariant Types
 			val.appendChild(doc.createTextNode( settings.value(k).toString() ));
