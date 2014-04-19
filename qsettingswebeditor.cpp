@@ -153,7 +153,10 @@ void QSettingsWebEditor::onHttpRequestData(const QByteArray &reqData)
 			s.remove(key);
 		}
 		else if(s.value(key) != map.value(key)) {
-			s.setValue(key, map.value(key));
+			s.setValue(key, map.value(key)); // TODO: Handle Other QVariant Types
+			map.remove(key);
+		}
+		else { // No change
 			map.remove(key);
 		}
 	}
