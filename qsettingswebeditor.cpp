@@ -69,10 +69,11 @@ void QSettingsWebEditor::onHttpRequest(QHttpRequest *req, QHttpResponse *resp)
 	if( !org.isEmpty() && !app.isEmpty() ) {
 		
 		if(req->method() == QHttpRequest::HTTP_POST) {
-			// TODO: wait for the data to be processed
+			// TODO: This is an inelegant patch. A better solution needs to be created.
+			html = generateProcessingPage();
+		} else {
+			html = generateSettingsPage(org, app);
 		}
-		
-		html = generateSettingsPage(org, app);
 	}
 	else {
 		html = generateIndexPage();
@@ -174,6 +175,39 @@ void QSettingsWebEditor::onHttpRequestData(const QByteArray &reqData)
 
 
 // Private:
+QString QSettingsWebEditor::generateProcessingPage()
+{
+	QDomDocument doc("html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\"");
+	QDomElement html = doc.createElement("html");
+	html.setAttribute("xmlns", "http://www.w3.org/1999/xhtml");
+	html.setAttribute("xml:lang", "en");
+	doc.appendChild(html);
+
+	// Head
+	QDomElement head  = doc.createElement("head");
+	QDomElement title = doc.createElement("title");
+	title.appendChild(doc.createTextNode("QSettingsWebEditor"));
+	QDomElement meta  = doc.createElement("meta");
+	meta.setAttribute("http-equiv", "refresh");
+	meta.setAttribute("content", "2.5");
+	html.appendChild(head);
+	head.appendChild(title);
+	head.appeadChild(meta);
+
+	// Body
+	QDomElement body = doc.createElement("body");
+	html.appendChild(body);
+	QDomElement h1 = doc.createElement("h1");
+	body.appendChild(h1);
+	
+	QString updateText = "Updating setings...";
+	
+	h1.appendChild(doc.createTextNode(updateText));
+
+	return doc.toString();
+}
+
+// Private:
 QString QSettingsWebEditor::generateIndexPage()
 {
 	QDomDocument doc("html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\"");
@@ -202,7 +236,8 @@ QString QSettingsWebEditor::generateIndexPage()
 	// TODO: present a form for the user to type in the OrganizationName & ApplicationName
 	// TODO: present a list of links to all the accessible OrganizationName/ApplicationName
 
-	return doc.toString();}
+	return doc.toString();
+}
 
 
 // Private:

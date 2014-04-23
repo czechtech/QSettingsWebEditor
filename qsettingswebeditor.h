@@ -32,6 +32,7 @@ private:
 	int portNumber;
 
 	QString generateSettingsPage(QString organization, QString application);
+	QString generateProcessingPage();
 	QString generateIndexPage();
 
 
