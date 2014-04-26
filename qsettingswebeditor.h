@@ -3,7 +3,6 @@
 
 #include <QObject>
 #include <QCoreApplication>
-#include <QtXml>
 #include <QEventLoop>
 #include <QUrl>
 #include <qsharedsettings.h>

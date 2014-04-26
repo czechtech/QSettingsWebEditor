@@ -1,5 +1,7 @@
 #include "qsettingswebeditor.h"
 
+#include <QtXml>
+
 QSettingsWebEditor::QSettingsWebEditor(QObject* parent, int port)
 	: QObject(parent)
 {
