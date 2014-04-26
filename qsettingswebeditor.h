@@ -20,27 +20,23 @@ class QSettingsWebEditor : public QObject
 	Q_OBJECT
 
 public:
-	explicit QSettingsWebEditor(QObject* parent = NULL);
+	explicit QSettingsWebEditor(QObject* parent = NULL, int port = 8080);
 	~QSettingsWebEditor();
 
 protected:
-	//
+	QString m_org;
+	QString m_app;
+	QHttpServer m_server;
+	int m_portNumber;
 	
 private:
-	QSharedSettings settings;
-	QHttpServer server;
-	int portNumber;
-
-	QString generateSettingsPage(QString organization, QString application);
-	QString generateProcessingPage();
-	QString generateIndexPage();
-
+	QHttpResponse *m_resp;
 
 public:
-	//
+	QString generateSettingsPage(QString organization, QString application);
+	void setPort(int port = 8080);
 
 public slots:
-	void onSettingsChanged(QStringList keys);
 	void onHttpRequest(QHttpRequest *req, QHttpResponse *resp);
 	void onHttpRequestEnd();
 	void onHttpRequestData(const QByteArray &data);

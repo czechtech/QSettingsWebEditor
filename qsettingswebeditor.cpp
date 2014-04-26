@@ -1,44 +1,37 @@
 #include "qsettingswebeditor.h"
 
-QSettingsWebEditor::QSettingsWebEditor(QObject* parent)
-	: QObject(parent), settings("CzechTech", "QSettingsWebEditor")
+QSettingsWebEditor::QSettingsWebEditor(QObject* parent, int port)
+	: QObject(parent)
 {
-	// Load Port Number Setting:
-	if(!settings.contains("Port")) {
-		qDebug() << "Establishing QSettings";
-		settings.setValue("Port", 8080);
-	}
-	portNumber = settings.value("Port", 8080).toInt();
+	m_portNumber = port;
 	
-	// Signal/Slot Connections:
-	connect(&settings, SIGNAL(settingsChanged(QStringList)),
-	             this, SLOT(onSettingsChanged(QStringList)));
-	connect(&server, SIGNAL(newRequest(QHttpRequest*, QHttpResponse*)),
-	           this, SLOT(onHttpRequest(QHttpRequest*, QHttpResponse*)));
+	m_org = QCoreApplication::organizationName();
+	m_app = QCoreApplication::applicationName();
+	if(m_org == "") m_org = QCoreApplication::organizationDomain(); // For Mac - http://qt-project.org/doc/qt-4.8/qcoreapplication.html#organizationName-prop
+	
+	connect(&m_server, SIGNAL(newRequest(QHttpRequest*, QHttpResponse*)), this, SLOT(onHttpRequest(QHttpRequest*, QHttpResponse*)));
 	
 	// Start Listening:
-	qDebug() << "Listening on port #" << portNumber;
-	server.listen(portNumber);
+	m_server.listen(m_portNumber);
+	// TODO: Check that this is successful
+	qDebug() << "QSettingsWebEditor: Listening on port #" << m_portNumber;
 }
 
 
 QSettingsWebEditor::~QSettingsWebEditor()
 {
-	server.close();
+	m_server.close();
 }
 
 
-// Public Slot:
-void QSettingsWebEditor::onSettingsChanged(QStringList keys)
+// Public:
+void QSettingsWebEditor::setPort(int port)
 {
-	if(!keys.join(" ").contains("Port")) return;
-
-	int p = settings.value("Port", 8080).toInt();
-	if(portNumber != p) {
+	if(m_portNumber != port) {
 		// TODO: server needs to be deleted and started over
-		server.listen(p);
-		portNumber = p;
-		qDebug() << "Now listening on port #" << portNumber;
+		m_server.listen(port);
+		m_portNumber = port;
+		qDebug() << "QSettingsWebEditor: Now listening on port #" << m_portNumber;
 	}
 }
 
@@ -46,57 +39,47 @@ void QSettingsWebEditor::onSettingsChanged(QStringList keys)
 // Public Slot:
 void QSettingsWebEditor::onHttpRequest(QHttpRequest *req, QHttpResponse *resp)
 {
-	connect(req, SIGNAL(end()),
-	       this, SLOT(onHttpRequestEnd()));
-	connect(req, SIGNAL(data(const QByteArray&)),
-	       this, SLOT(onHttpRequestData(const QByteArray&)));
-	
-	QString path = req->path();
-
-	// Requests To Ignore:
-	if(path.contains("favicon.ico", Qt::CaseInsensitive)) {
+	// URL's To Ignore:
+	if(req->path().contains("favicon.ico", Qt::CaseInsensitive)) {
+		resp->setHeader("Content-Length", "0");
+		resp->writeHead(404); // Not Found
+		resp->end();
 		return;
 	}
-
-	QString html;
-
-	QString org = path.section("/", 1, 1);
-	QString app = path.section("/", 2, 2);
-	if(app.contains(".") && path.count("/") < 3) { // TODO: Better URL checking
-		app = "";
-	}
-	// TODO: Check for valid qsettings?
-	if( !org.isEmpty() && !app.isEmpty() ) {
-		
-		if(req->method() == QHttpRequest::HTTP_POST) {
-			// TODO: This is an inelegant patch. A better solution needs to be created.
-			html = generateProcessingPage();
-		} else {
-			html = generateSettingsPage(org, app);
-		}
-	}
-	else {
-		html = generateIndexPage();
-	}
 	
-	resp->setHeader("Content-Length", QString::number(html.length()));
-	resp->writeHead(200); // everything is OK
-	resp->write(html.toUtf8());
-	resp->end();
+	if(req->method() == QHttpRequest::HTTP_POST) {
+		connect(req, SIGNAL(data(const QByteArray&)), this, SLOT(onHttpRequestData(const QByteArray&)));
+	}
+
+	connect(req, SIGNAL(end()), this, SLOT(onHttpRequestEnd()));
+	
+	m_resp = resp;
 }
 
 
 // Public Slot:
 void QSettingsWebEditor::onHttpRequestEnd()
 {
-	//qDebug() << "onHttpRequestEnd()";
+	if(!m_resp) {
+		qDebug() << "QSettingsWebEditor: HTTP Request Ended With Null Response Pointer";
+		return;
+	}
+	
+	QString html = generateSettingsPage(m_org, m_app);
+
+	m_resp->setHeader("Content-Length", QString::number(html.length()));
+	m_resp->writeHead(200); // OK
+	m_resp->write(html.toUtf8());
+	m_resp->end();
+	
+	m_resp = 0; // QHttpServer manages the deletion
 }
 
 
 // Public Slot:
 void QSettingsWebEditor::onHttpRequestData(const QByteArray &reqData)
 {
-	// TODO: Wait until QHttpRequest::end() signal to guarantee all data has been received
+	// TODO: Wait until QHttpRequest::end() signal to guarantee all data has been received?
 	
 	QString data(reqData);
 	
@@ -126,10 +109,9 @@ void QSettingsWebEditor::onHttpRequestData(const QByteArray &reqData)
 	// Parse Organization & Application
 	QString org = map.take("organization");
 	QString app = map.take("application");
-	// TODO: Security hole if a qSettings key is "organization" or "application"
-	if(org.length() == 0 || app.length() == 0) {
-		qDebug() << "onHttpRequestData could not parse organization and application from request data";
-		qDebug() << reqData;
+	
+	if(org != m_org || app != m_app) {
+		qDebug() << "QSettingsWebEditor: Can only change settings of active application: " << m_org << m_app;
 		return;
 	}
 	
@@ -174,73 +156,7 @@ void QSettingsWebEditor::onHttpRequestData(const QByteArray &reqData)
 }
 
 
-// Private:
-QString QSettingsWebEditor::generateProcessingPage()
-{
-	QDomDocument doc("html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\"");
-	QDomElement html = doc.createElement("html");
-	html.setAttribute("xmlns", "http://www.w3.org/1999/xhtml");
-	html.setAttribute("xml:lang", "en");
-	doc.appendChild(html);
-
-	// Head
-	QDomElement head  = doc.createElement("head");
-	QDomElement title = doc.createElement("title");
-	title.appendChild(doc.createTextNode("QSettingsWebEditor"));
-	QDomElement meta  = doc.createElement("meta");
-	meta.setAttribute("http-equiv", "refresh");
-	meta.setAttribute("content", "2.5");
-	html.appendChild(head);
-	head.appendChild(title);
-	head.appeadChild(meta);
-
-	// Body
-	QDomElement body = doc.createElement("body");
-	html.appendChild(body);
-	QDomElement h1 = doc.createElement("h1");
-	body.appendChild(h1);
-	
-	QString updateText = "Updating setings...";
-	
-	h1.appendChild(doc.createTextNode(updateText));
-
-	return doc.toString();
-}
-
-// Private:
-QString QSettingsWebEditor::generateIndexPage()
-{
-	QDomDocument doc("html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\"");
-	QDomElement html = doc.createElement("html");
-	html.setAttribute("xmlns", "http://www.w3.org/1999/xhtml");
-	html.setAttribute("xml:lang", "en");
-	doc.appendChild(html);
-
-	// Head
-	QDomElement head  = doc.createElement("head");
-	QDomElement title = doc.createElement("title");
-	title.appendChild(doc.createTextNode("QSettingsWebEditor"));
-	html.appendChild(head);
-	head.appendChild(title);
-
-	// Body
-	QDomElement body = doc.createElement("body");
-	html.appendChild(body);
-	QDomElement h1 = doc.createElement("h1");
-	body.appendChild(h1);
-	
-	QString helpText = "URL Path must be of the form organization/application/"; // TODO: Make this more informative
-	
-	h1.appendChild(doc.createTextNode(helpText));
-
-	// TODO: present a form for the user to type in the OrganizationName & ApplicationName
-	// TODO: present a list of links to all the accessible OrganizationName/ApplicationName
-
-	return doc.toString();
-}
-
-
-// Private:
+// Public:
 QString QSettingsWebEditor::generateSettingsPage(QString organization, QString application)
 {
 	QDomDocument doc("html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\"");
@@ -321,7 +237,7 @@ QString QSettingsWebEditor::generateSettingsPage(QString organization, QString a
 			if(!v.toBool()) { iTrue.setAttribute("checked", "checked"); }
 		} else {
 			// TODO: Handle Other QVariant Types
-			val.appendChild(doc.createTextNode( settings.value(k).toString() ));
+			val.appendChild(doc.createTextNode( s.value(k).toString() ));
 			qDebug() << "Could not present QVariant " << v;
 		}
 	}
