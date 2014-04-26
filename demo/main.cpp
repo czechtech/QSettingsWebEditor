@@ -1,7 +1,7 @@
 #include <iostream>
 #include <csignal>
 #include <QCoreApplication>
-#include "qsettingswebeditor.h"
+#include "../qsettingswebeditor.h"
 
 using namespace std;
 
